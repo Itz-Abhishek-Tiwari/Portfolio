@@ -5,10 +5,10 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import type { GithubData } from '../lib/github';
 const colors:Record<string,string>={JavaScript:'#f1da61',TypeScript:'#6b9cdd',Python:'#88adcf',Shell:'#a5c777',CSS:'#b893df',HTML:'#e49368',Lua:'#909aca'};
-export function GithubSection({github,linkedin,name,role,company}:{github:string;linkedin:string;name:string;role:string;company:string}){
+export function GithubSection({github,linkedin,name,role,company,preview=false}:{preview?:boolean;github:string;linkedin:string;name:string;role:string;company:string}){
  const [data,setData]=useState<GithubData|null>(null),[busy,setBusy]=useState(true),[error,setError]=useState(''),[query,setQuery]=useState(''),[showAll,setShowAll]=useState(false);const controller=useRef<AbortController|null>(null),container=useRef<HTMLDivElement>(null);
- async function sync(){controller.current?.abort();const abort=new AbortController();controller.current=abort;setBusy(true);setError('');try{const r=await fetch('/api/github',{signal:abort.signal});const body=await r.json() as GithubData&{error?:string};if(!r.ok)throw new Error(body.error||'Unable to load GitHub');setData(body);}catch(e){if(!abort.signal.aborted)setError(e instanceof Error?e.message:'GitHub unavailable');}finally{if(!abort.signal.aborted)setBusy(false);}}
- useEffect(()=>{sync();return()=>controller.current?.abort();},[github]);
+ async function sync(){controller.current?.abort();const abort=new AbortController();controller.current=abort;setBusy(true);setError('');try{const r=await fetch(preview?'/api/admin/github?profile='+encodeURIComponent(github):'/api/github',{signal:abort.signal});const body=await r.json() as GithubData&{error?:string};if(!r.ok)throw new Error(body.error||'Unable to load GitHub');setData(body);}catch(e){if(!abort.signal.aborted)setError(e instanceof Error?e.message:'GitHub unavailable');}finally{if(!abort.signal.aborted)setBusy(false);}}
+ useEffect(()=>{sync();return()=>controller.current?.abort();},[github,preview]);
  useEffect(()=>{if(!container.current||window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;const ctx=gsap.context(()=>{gsap.fromTo('.repo-card',{y:20,opacity:0},{y:0,opacity:1,duration:.5,stagger:.05,ease:'power3.out'});},container);ScrollTrigger.refresh();return()=>ctx.revert();},[data,query]);
  const matching=data?.repositories.filter(r=>(r.name+' '+r.description+' '+r.language).toLowerCase().includes(query.toLowerCase()))||[];
  const repos=matching.slice(0,query||showAll?matching.length:4);

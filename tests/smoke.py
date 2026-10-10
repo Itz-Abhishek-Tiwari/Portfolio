@@ -22,7 +22,7 @@ assert request('/api/admin/content','PUT',body,True,'https://example.com')[0]==4
 stale=json.dumps({'content':saved['content'],'revision':9999,'publish':False}).encode()
 assert request('/api/admin/content','PUT',stale,True,BASE)[0]==409
 invalid=dict(saved['content']);invalid['github']='javascript:alert(1)'
-assert request('/api/admin/content','PUT',json.dumps({'content':invalid,'revision':saved['revision'],'publish':False}).encode(),True,BASE)[0]==400
+assert request('/api/admin/content','PUT',json.dumps({'content':invalid,'revision':saved['revision'],'publish':False}).encode(),True,BASE)[0]==422
 for filename, mime in [('abhishek.jpg','image/jpeg'),('abhishek-tiwari-cv.pdf','application/pdf')]:
     boundary='PortfolioSmokeBoundary'
     data=(pathlib.Path('public/assets')/filename).read_bytes()

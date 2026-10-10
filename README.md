@@ -18,7 +18,7 @@ Apply the migration only once per local database. Development sign-in is simulat
 
 Visit `/admin`. Hosted writes require ChatGPT sign-in and the administrator email. The default email is `abhitiwariabhi7@gmail.com`, as supplied in the CV. Set `PORTFOLIO_ADMIN_EMAIL` through Sites environment variables if the ChatGPT account uses a different email. Every write checks authorization and same-origin requests server-side.
 
-Profile, links, skills, projects, project stories, project order, visibility, experience, portrait, résumé, and accent colors are editable. Save draft preserves the live content; Publish promotes the draft. `/admin/preview` displays the saved draft. Revision checks prevent overwriting newer changes from another session.
+Profile, links, skills, projects, project stories, project order, visibility, experience, portrait, résumé, complete themes and scene motion are editable. Save draft preserves the live content; Publish promotes the draft. `/admin/preview` displays the saved draft. Revision checks prevent overwriting newer changes from another session.
 
 Content persists in D1. Uploaded JPG, PNG, WebP, and PDF files persist in R2, with size and signature validation. Initial content is supplied from the CV and verified NamiConfig README; app illustrations are conceptual, not screenshots of production apps.
 
@@ -49,3 +49,26 @@ PORTFOLIO_TEST_URL=http://127.0.0.1:5173 python3 tests/smoke.py
 ```
 
 The project section uses complete vertical chapters with tailored property-discovery and task-workflow illustrations, plus the actual NamiConfig screenshot. The connections section uses a searchable repository directory with four initial entries, optional expansion, and a compact LinkedIn row.
+
+## Sunset redesign and studio fixes
+
+The current design uses a shared semantic theme system (`lib/theme.ts` and CSS tokens): Afterglow (default sunset), Nightfall, and Evergreen. The theme covers the portfolio, studio, previews, section surfaces, text, borders, buttons, and SVG artwork. Original photographs and repository screenshots retain their source pixels.
+
+The hero has distinct background, transparent mist, and transparent foreground planes. GSAP gives each plane separate pointer and scroll depth; the pointer layer and scroll layer use nested wrappers to avoid transform conflicts. Motion can be disabled in Appearance, and reduced-motion preferences are respected.
+
+Studio fixes include comparison-based dirty state, disabled editing during saves/uploads, revision conflicts that retain local edits, structured inline field errors, undo for in-memory removals, project cover uploads, file-signature and target-type validation, current-draft GitHub discovery, and a same-origin preview readiness handshake. The embedded preview receives current unsaved edits; standalone preview shows the saved draft. Publish is explicit and distinct from Save draft.
+
+Local admin regression checks cover every theme's draft/preview/publish transition, duplicate IDs, concurrent writers, stale revisions, field errors, and unauthorized requests. Tests restore the original local draft and published content.
+
+### Generated scene assets
+
+Created with the built-in ImageGen tool. Project-local files:
+
+- `/Users/abhishek/WorkSpace/port/public/assets/sunset-background.png`: original hand-painted anime sunset city, plum shadows, coral clouds, gold sun at right, darker sky at left, distant mountains, no nearby foreground or text.
+- `/Users/abhishek/WorkSpace/port/public/assets/night-background.png`: original anime night city, indigo sky, ivory crescent moon, warm windows, left-hand space for copy, no foreground or text.
+- `/Users/abhishek/WorkSpace/port/public/assets/night-foreground.png`: transparent anime rooftop and short-haired figure viewed from behind on the right, navy jacket with blue and warm rim lighting, no sky or city.
+- `/Users/abhishek/WorkSpace/port/public/assets/night-mist.png`: transparent hand-painted pale-blue and indigo atmospheric wisps across the middle band, no landscape, person, background, or text.
+
+Original generated files remain in the Codex generated-images directory. Foreground and mist alpha channels were verified. The Afterglow theme uses the dedicated sunset background; Nightfall and Evergreen use the night scene with theme-specific atmosphere.
+
+The favicon also follows the chosen palette. Saving normalizes editable fields and updates the local baseline, so whitespace cleanup does not leave a false unsaved state.
