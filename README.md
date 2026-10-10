@@ -29,3 +29,21 @@ Site identity and bindings are tracked in `.openai/hosting.json`. The first depl
 ## Artwork
 
 `public/assets/rooftop-ink.png` was generated with the built-in ImageGen tool. Prompt: panoramic fine-ink manga rooftop illustration on warm ivory paper, lone figure overlooking city roofs and distant mountains under a vermilion sun; limited ink/ivory/vermilion palette, analog crosshatching, no lettering or watermark. Original is preserved in the Codex generated-images directory.
+
+## Motion and connections
+
+The public page now uses GSAP and ScrollTrigger for staged name reveals, artwork parallax, a pinned horizontal project gallery on desktop, a moving marquee, section entrances, pointer following, magnetic links, and story-dialog entrances. It respects reduced-motion preferences, uses a stacked gallery on mobile, restores hash navigation after layout initialization, and reverts animation contexts on unmount.
+
+`/api/github` reads the profile URL in published content and retrieves public profile data, up to 100 repositories, and recent public events from GitHub's REST API. Responses are cached in the `github_cache` D1 table for ten minutes; an unavailable provider returns the last successful snapshot with an explicit stale flag. Repository search, refresh, and links are available on the public page. Admin Connections can import selected repositories into an unpublished draft, with visibility off until explicitly enabled.
+
+LinkedIn search confirmed the supplied handle against Thoughtwin. The available connector only exposes people search, so the professional panel links to the verified profile and uses studio-managed career information; it does not claim to sync posts or full profile data. Hosted connector eligibility discovery is unavailable in this tool surface, so no workspace connector declaration or visitor connection is included. GitHub uses its public REST API without a token.
+
+The NamiConfig image is an actual repository screenshot from `screenshots/dark/dark1.png` on branch `namiConfig2.0`, saved locally as `public/assets/nami-desktop.png`.
+
+Apply `drizzle/0001_motionless_smiling_tiger.sql` once to an existing local database to add the GitHub cache table. Production migrations run through Sites publication.
+
+Run integration checks against an existing dev preview with:
+
+```sh
+PORTFOLIO_TEST_URL=http://127.0.0.1:5173 python3 tests/smoke.py
+```

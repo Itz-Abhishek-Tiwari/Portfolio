@@ -1,6 +1,7 @@
 """Integration checks against the local Vinext development server."""
 import json, urllib.request, urllib.error, pathlib
-BASE='http://localhost:3000'
+import os
+BASE=os.environ.get('PORTFOLIO_TEST_URL','http://localhost:3000')
 def request(path, method='GET', body=None, auth=False, origin=None, content_type='application/json'):
     headers={}
     if auth: headers['Cookie']='__sites_local_auth=1'
@@ -32,4 +33,9 @@ for filename, mime in [('abhishek.jpg','image/jpeg'),('abhishek-tiwari-cv.pdf','
     assert code==200 and raw==data and headers['Content-Type']==mime
     assert headers['X-Content-Type-Options']=='nosniff'
 assert json.loads(request('/api/content')[2])['content']['availability']=='Let’s build something thoughtful'
+github=json.loads(request('/api/github')[2])
+assert github['profile']['login'].lower()=='itz-abhishek-tiwari' and github['repositories']
+assert any(r['name']=='NamiConfig' for r in github['repositories'])
+assert all(r['url'].startswith('https://github.com/') for r in github['repositories'])
+assert json.loads(request('/api/github')[2])['syncedAt']==github['syncedAt']
 print('PASS: public content, authorization, CSRF, stale revision, URL validation, image/PDF upload and exact download.')
