@@ -41,13 +41,11 @@ export function usePortfolioMotion(root:RefObject<HTMLDivElement|null>){
  return()=>{alive=false;mm.revert();};
  },[root]);
 }
-export function useProjectRail(root:RefObject<HTMLDivElement|null>,filter:string){useLayoutEffect(()=>{if(!root.current)return;gsap.registerPlugin(ScrollTrigger);const mm=gsap.matchMedia();const ctx=gsap.context(()=>{
- if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches)gsap.fromTo('.project',{opacity:0,y:28},{opacity:1,y:0,duration:.6,stagger:.08,ease:'power3.out'});
- mm.add('(min-width: 900px) and (prefers-reduced-motion: no-preference)',()=>{
- const rail=root.current!,frame=rail.parentElement!;const distance=()=>Math.max(0,rail.scrollWidth-frame.clientWidth);
- if(rail.children.length<2)return;
- const tween=gsap.to(rail,{x:()=>-distance(),ease:'none',scrollTrigger:{trigger:frame,start:'top 100px',end:()=>'+='+Math.max(650,distance()),pin:true,scrub:1,invalidateOnRefresh:true,anticipatePin:1}});
- const focus=(e:FocusEvent)=>{const target=e.target as HTMLElement;if(!target.matches(':focus-visible'))return;const card=target.closest<HTMLElement>('.project');const trigger=tween.scrollTrigger;if(card&&trigger){const first=rail.firstElementChild as HTMLElement;trigger.scroll(trigger.start+Math.min(distance(),card.offsetLeft-first.offsetLeft));}};rail.addEventListener('focusin',focus);return()=>rail.removeEventListener('focusin',focus);
- 
- });
- },root.current.parentElement!);ScrollTrigger.refresh();return()=>{mm.revert();ctx.revert();};},[root,filter]);}
+export function useProjectRail(root:RefObject<HTMLDivElement|null>,filter:string){
+ useLayoutEffect(()=>{if(!root.current)return;gsap.registerPlugin(ScrollTrigger);const mm=gsap.matchMedia();mm.add('(prefers-reduced-motion: no-preference)',()=>{
+ const ctx=gsap.context(()=>{root.current!.querySelectorAll<HTMLElement>('.project').forEach(card=>{
+ gsap.fromTo(card,{y:45,opacity:0},{y:0,opacity:1,duration:.85,ease:'power3.out',scrollTrigger:{trigger:card,start:'top 90%',once:true}});
+ const art=card.querySelector('.feature-art');if(art)gsap.fromTo(art,{y:-15},{y:15,ease:'none',scrollTrigger:{trigger:card,start:'top bottom',end:'bottom top',scrub:1}});
+ });},root);return()=>ctx.revert();
+ },root);ScrollTrigger.refresh();return()=>mm.revert();},[root,filter]);
+}

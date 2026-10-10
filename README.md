@@ -32,7 +32,7 @@ Site identity and bindings are tracked in `.openai/hosting.json`. The first depl
 
 ## Motion and connections
 
-The public page now uses GSAP and ScrollTrigger for staged name reveals, artwork parallax, a pinned horizontal project gallery on desktop, a moving marquee, section entrances, pointer following, magnetic links, and story-dialog entrances. It respects reduced-motion preferences, uses a stacked gallery on mobile, restores hash navigation after layout initialization, and reverts animation contexts on unmount.
+The public page now uses GSAP and ScrollTrigger for staged name reveals, artwork parallax, full-width project chapters with illustration parallax, a moving marquee, section entrances, pointer following, magnetic links, and story-dialog entrances. It respects reduced-motion preferences, keeps full project chapters visible on desktop and mobile, restores hash navigation after layout initialization, and reverts animation contexts on unmount.
 
 `/api/github` reads the profile URL in published content and retrieves public profile data, up to 100 repositories, and recent public events from GitHub's REST API. Responses are cached in the `github_cache` D1 table for ten minutes; an unavailable provider returns the last successful snapshot with an explicit stale flag. Repository search, refresh, and links are available on the public page. Admin Connections can import selected repositories into an unpublished draft, with visibility off until explicitly enabled.
 
@@ -47,3 +47,5 @@ Run integration checks against an existing dev preview with:
 ```sh
 PORTFOLIO_TEST_URL=http://127.0.0.1:5173 python3 tests/smoke.py
 ```
+
+The project section uses complete vertical chapters with tailored property-discovery and task-workflow illustrations, plus the actual NamiConfig screenshot. The connections section uses a searchable repository directory with four initial entries, optional expansion, and a compact LinkedIn row.
