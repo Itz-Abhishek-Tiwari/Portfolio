@@ -1,3 +1,4 @@
+import { readFileSync,existsSync } from 'node:fs';
 import vinext from "vinext";
 import { defineConfig } from "vite";
 import hostingConfig from "./.openai/hosting.json";
@@ -50,9 +51,11 @@ export default defineConfig(async ({ command }) => {
 
   // Wrangler snapshots its log path while the Cloudflare plugin is imported.
   const { cloudflare } = await import("@cloudflare/vite-plugin");
+ const databaseConfig=command==='serve'&&existsSync('.sites-runtime/database.json')?JSON.parse(readFileSync('.sites-runtime/database.json','utf8')):null;
 
   return {
     server: {
+ fs:{deny:['**/.sites-runtime/**','**/.env*','**/.dev.vars*','**/*.pem']},
       ...(managedLinux
         ? { host: "0.0.0.0", allowedHosts: ["terminal.local"] }
         : {}),
@@ -69,6 +72,7 @@ export default defineConfig(async ({ command }) => {
         inspectorPort: false,
         config: {
           ...localBindingConfig,
+ vars:databaseConfig?{PORTFOLIO_DATABASE_API_URL:databaseConfig.apiUrl,PORTFOLIO_DATABASE_API_KEY:databaseConfig.apiKey}:{},
           ...(command === "serve"
             ? {
                 services: [
