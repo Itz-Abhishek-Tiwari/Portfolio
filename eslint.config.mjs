@@ -5,6 +5,8 @@ import nextTs from "eslint-config-next/typescript";
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
+  // Images are user-uploaded and served from the Worker; there is no Next image optimizer to route them through.
+  { rules: { "@next/next/no-img-element": "off", "@typescript-eslint/no-unused-vars": ["warn", { ignoreRestSiblings: true }] } },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:
@@ -13,16 +15,6 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
-  {
-    files: ["components/ui/**/*.{ts,tsx}", "hooks/use-mobile.ts"],
-    rules: {
-      // These files are vendored verbatim from shadcn@4.17.0. Keep the
-      // registry source intact while applying the stricter rules to Site code.
-      "@typescript-eslint/no-unused-vars": "off",
-      "react-hooks/purity": "off",
-      "react-hooks/set-state-in-effect": "off",
-    },
-  },
 ]);
 
 export default eslintConfig;

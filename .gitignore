@@ -52,5 +52,10 @@ next-env.d.ts
 /.sites-runtime/
 /.agents/
 /.codex/
+/.openai/
 /outputs/
 /work/
+
+# Local database configuration and upload/runtime state
+.dev.vars*
+*.tsbuildinfo
