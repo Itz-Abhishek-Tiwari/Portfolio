@@ -1,6 +1,11 @@
-import { isAdmin } from '../../../lib/admin';
-import { readContent } from '../../../lib/store';
+import { isAdmin } from '@/lib/server/auth';
+import { readContent } from '@/lib/server/content-store';
 import { redirect } from 'next/navigation';
-import PreviewClient from './preview-client';
-export const dynamic='force-dynamic';
-export default async function Preview({searchParams}:{searchParams:Promise<{embedded?:string}>}){if(!await isAdmin())redirect('/admin');const {content}=await readContent(true);const params=await searchParams;return <PreviewClient initial={content} embedded={params.embedded==='1'}/>;}
+import DraftPreview from '@/components/studio/draft-preview';
+export const dynamic = 'force-dynamic';
+export default async function Preview({ searchParams }: { searchParams: Promise<{ embedded?: string }> }) {
+  if (!(await isAdmin())) redirect('/admin');
+  const { content } = await readContent(true);
+  const params = await searchParams;
+  return <DraftPreview initial={content} embedded={params.embedded === '1'} />;
+}
