@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+  <title>Abhishek Tiwari</title>
+  <style>
+    .ink { stroke: #161a1f; }
+    .dot { fill: #c2562f; }
+    @media (prefers-color-scheme: dark) { .ink { stroke: #f3eee5; } .dot { fill: #e6a07e; } }
+  </style>
+  <g class="ink">
+    <path d="M8 50 21 14 34 50" />
+    <path d="M32 14h24" />
+    <path d="M44.5 14v36" />
+    <path d="M13.5 38h31" />
+  </g>
+  <circle class="dot" cx="55" cy="49" r="3.4" stroke="none" />
+</svg>

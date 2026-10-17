@@ -1,1 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="#211323"/><text x="32" y="40" text-anchor="middle" fill="#ffbc9d" font-family="Arial,sans-serif" font-size="25" font-weight="700">AT</text><circle cx="52" cy="52" r="4" fill="#f2d99f"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <rect width="64" height="64" rx="14" fill="#161a1f"/>
+  <g transform="translate(8 8) scale(.75)" stroke="#f3eee5" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M8 50 21 14 34 50"/>
+    <path d="M32 14h24"/>
+    <path d="M44.5 14v36"/>
+    <path d="M13.5 38h31"/>
+    <circle cx="55" cy="49" r="3.8" fill="#e6a07e" stroke="none"/>
+  </g>
+</svg>
