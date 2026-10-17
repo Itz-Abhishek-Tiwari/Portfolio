@@ -1,5 +1,5 @@
-import { env } from 'cloudflare:workers';
 import { sameOrigin } from '@/lib/server/auth';
+import { clientIp, serverEnv } from '@/lib/server/env';
 import { contactSchema } from '@/lib/server/contact';
 import { dataRequest, DatabaseError } from '@/lib/server/db';
 export async function POST(request: Request) {
@@ -38,8 +38,7 @@ export async function POST(request: Request) {
         { status: 422 }
       );
     if (parsed.data.website) return Response.json({ received: true }, { status: 202 });
-    const values = env as unknown as Record<string, string>,
-      secret = values.PORTFOLIO_DATABASE_API_KEY;
+    const secret = serverEnv('SUPABASE_SECRET_KEY');
     if (!secret) throw new DatabaseError('Contact storage is unavailable.', 503);
     const key = await crypto.subtle.importKey(
       'raw',
@@ -51,7 +50,7 @@ export async function POST(request: Request) {
     const digest = await crypto.subtle.sign(
       'HMAC',
       key,
-      new TextEncoder().encode(request.headers.get('cf-connecting-ip') || 'local-development')
+      new TextEncoder().encode(clientIp(request))
     );
     const bucket = Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, '0')).join('');
     const { name, email, topic, message } = parsed.data;

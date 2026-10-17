@@ -1,4 +1,4 @@
-import { env } from 'cloudflare:workers';
+import { serverEnv } from '@/lib/server/env';
 import { isAdmin } from '@/lib/server/auth';
 import type { GameResult } from '@/lib/games';
 
@@ -16,10 +16,10 @@ type RawgGame = {
 // Admin-only game search on RAWG. The studio copies the picked result into content, so the public site never calls RAWG.
 export async function GET(request: Request) {
   if (!(await isAdmin())) return Response.json({ error: 'Administrator access required' }, { status: 403 });
-  const key = (env as unknown as Record<string, string>).PORTFOLIO_RAWG_API_KEY;
+  const key = serverEnv('PORTFOLIO_RAWG_API_KEY');
   if (!key)
     return Response.json(
-      { error: 'Add PORTFOLIO_RAWG_API_KEY to .dev.vars (free key at rawg.io/apidocs) to search games.' },
+      { error: 'Add PORTFOLIO_RAWG_API_KEY to .env.local or your Vercel environment variables (free key at rawg.io/apidocs) to search games.' },
       { status: 501 }
     );
   const q = (new URL(request.url).searchParams.get('q') || '').trim().slice(0, 120);

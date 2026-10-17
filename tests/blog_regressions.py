@@ -1,9 +1,9 @@
 """Isolated local journal lifecycle test; fixture is archived afterward."""
 import json,uuid,urllib.request,urllib.error
-BASE='http://127.0.0.1:5173'
+from local_env import BASE,COOKIE
 def call(path,method='GET',body=None,auth=True):
  h={'Origin':BASE,'Content-Type':'application/json'}
- if auth:h['Cookie']='__sites_local_auth=1'
+ if auth:h['Cookie']=COOKIE
  try:
   with urllib.request.urlopen(urllib.request.Request(BASE+path,headers=h,data=json.dumps(body).encode() if body is not None else None,method=method)) as r:return r.status,json.loads(r.read()) if path.startswith('/api') else r.read().decode()
  except urllib.error.HTTPError as e:return e.code,e.read().decode()

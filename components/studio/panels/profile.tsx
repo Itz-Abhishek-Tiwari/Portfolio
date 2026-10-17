@@ -132,7 +132,7 @@ export default function ProfilePanel({
               }}
             />
             <small>
-              Select several at once · JPG, PNG or WebP · up to 8 MB each · {8 - content.bandSlides.length}{' '}
+              Select several at once · JPG, PNG or WebP · up to 4 MB each · {8 - content.bandSlides.length}{' '}
               more allowed
             </small>
           </label>

@@ -136,4 +136,4 @@ npx prettier --write <changed .ts/.tsx files>   # not site.css
 npm run themes:generate                          # only after editing lib/theme.ts
 ```
 
-The dev server is the user's own (`npm run dev`, which runs vinext on Vite with the Cloudflare runtime, at `http://127.0.0.1:5173`). Plain `next dev` fails on `cloudflare:workers`, and the sandbox usually can't reach the user's server, so say plainly when a change hasn't been seen in a browser and tell the user what to look at.
+The dev server is the user's own (`npm run dev`, plain `next dev` at `http://localhost:3000`, reading Supabase credentials from `.env.local`), and the sandbox usually can't reach the user's server, so say plainly when a change hasn't been seen in a browser and tell the user what to look at.

@@ -5,15 +5,16 @@ import {
   createSessionToken,
   sameOrigin
 } from '@/lib/server/auth';
+import { clientIp } from '@/lib/server/env';
 
-// Per-isolate throttle: best-effort brake on password guessing.
+// Per-instance throttle: best-effort brake on password guessing.
 const attempts = new Map<string, { count: number; until: number }>();
 const MAX_ATTEMPTS = 5;
 const LOCK_MS = 15 * 60 * 1000;
 
 export async function POST(request: Request) {
   if (!sameOrigin(request)) return Response.json({ error: 'Invalid request origin.' }, { status: 403 });
-  const ip = request.headers.get('cf-connecting-ip') || 'unknown';
+  const ip = clientIp(request);
   const entry = attempts.get(ip);
   if (entry && entry.count >= MAX_ATTEMPTS && entry.until > Date.now())
     return Response.json({ error: 'Too many attempts. Try again in a few minutes.' }, { status: 429 });

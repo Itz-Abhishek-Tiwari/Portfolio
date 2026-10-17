@@ -1,10 +1,13 @@
-import { env } from 'cloudflare:workers';
 import { isAdmin, sameOrigin } from '@/lib/server/auth';
+import { putFile, storageReady } from '@/lib/server/storage';
+
+// Vercel rejects function request bodies over 4.5 MB, so files are capped at 4 MB.
+const MAX_BYTES = 4 * 1024 * 1024;
 export async function POST(request: Request) {
   if (!sameOrigin(request) || !(await isAdmin()))
     return Response.json({ error: 'Administrator access required' }, { status: 403 });
-  if (Number(request.headers.get('content-length') || 0) > 9 * 1024 * 1024)
-    return Response.json({ error: 'Choose a file under 8 MB' }, { status: 413 });
+  if (Number(request.headers.get('content-length') || 0) > MAX_BYTES + 64 * 1024)
+    return Response.json({ error: 'Choose a file under 4 MB' }, { status: 413 });
   let form: FormData;
   try {
     form = await request.formData();
@@ -12,8 +15,8 @@ export async function POST(request: Request) {
     return Response.json({ error: 'The upload could not be read. Choose the file again.' }, { status: 400 });
   }
   const file = form.get('file');
-  if (!(file instanceof File) || !file.size || file.size > 8 * 1024 * 1024)
-    return Response.json({ error: 'Choose a non-empty file under 8 MB' }, { status: 400 });
+  if (!(file instanceof File) || !file.size || file.size > MAX_BYTES)
+    return Response.json({ error: 'Choose a non-empty file under 4 MB' }, { status: 400 });
   const buffer = await file.arrayBuffer(),
     b = new Uint8Array(buffer),
     decoder = new TextDecoder();
@@ -47,14 +50,14 @@ export async function POST(request: Request) {
       { error: kind === 'resume' ? 'Choose a valid PDF résumé.' : 'Choose a valid JPG, PNG, or WebP image.' },
       { status: 422 }
     );
-  if (!env.BUCKET)
+  if (!storageReady())
     return Response.json({ error: 'Upload storage is unavailable. Try again later.' }, { status: 503 });
   try {
     const ext = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'application/pdf': 'pdf' }[
         detected
       ],
       key = crypto.randomUUID() + '.' + ext;
-    await env.BUCKET.put(key, buffer, { httpMetadata: { contentType: detected } });
+    await putFile(key, buffer, detected);
     return Response.json({ url: '/api/media/' + key });
   } catch {
     return Response.json({ error: 'Upload failed. The current file has not been changed.' }, { status: 503 });

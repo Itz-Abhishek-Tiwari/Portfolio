@@ -1,4 +1,4 @@
-import { env } from 'cloudflare:workers';
+import { serverEnv } from '@/lib/server/env';
 
 // Shared YouTube Data API helpers for the studio's song search and the public "find a playable copy" lookup.
 
@@ -6,8 +6,7 @@ const API = 'https://www.googleapis.com/youtube/v3/';
 /** Where the site's visitors are; region-blocked videos there are treated as unplayable. */
 export const REGION = 'IN';
 
-export const youtubeKey = () =>
-  (env as unknown as Record<string, string | undefined>).PORTFOLIO_YOUTUBE_API_KEY || '';
+export const youtubeKey = () => serverEnv('PORTFOLIO_YOUTUBE_API_KEY');
 
 /** One Data API call. Null on any failure (bad key, quota, timeout) so callers can degrade quietly. */
 export async function ytCall<T>(

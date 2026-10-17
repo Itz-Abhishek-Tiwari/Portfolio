@@ -1,15 +1,14 @@
 import { cookies } from 'next/headers';
-import { env } from 'cloudflare:workers';
+import { serverEnv } from '@/lib/server/env';
 
 export const SESSION_COOKIE = 'admin_session';
 export const SESSION_SECONDS = 60 * 60 * 24 * 7;
 
-type AuthEnv = {
-  PORTFOLIO_ADMIN_EMAIL?: string;
-  PORTFOLIO_ADMIN_PASSWORD?: string;
-  PORTFOLIO_SESSION_SECRET?: string;
-};
-const config = () => env as unknown as AuthEnv;
+const config = () => ({
+  PORTFOLIO_ADMIN_EMAIL: serverEnv('PORTFOLIO_ADMIN_EMAIL'),
+  PORTFOLIO_ADMIN_PASSWORD: serverEnv('PORTFOLIO_ADMIN_PASSWORD'),
+  PORTFOLIO_SESSION_SECRET: serverEnv('PORTFOLIO_SESSION_SECRET')
+});
 
 const encoder = new TextEncoder();
 const toHex = (buffer: ArrayBuffer) =>

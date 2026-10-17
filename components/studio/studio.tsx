@@ -231,9 +231,9 @@ export default function Studio({
   // One file to storage; returns its media URL or throws a message fit for the status line.
   async function send(file: File, kind: 'image' | 'resume') {
     if (!file.size) throw new Error('That file is empty.');
-    if (kind === 'resume' && file.size > MAX_UPLOAD) throw new Error('Choose a file under 8 MB.');
+    if (kind === 'resume' && file.size > MAX_UPLOAD) throw new Error('Choose a file under 4 MB.');
     const prepared = kind === 'image' ? await prepareImage(file) : file;
-    if (prepared.size > MAX_UPLOAD) throw new Error('That file is still over 8 MB. Choose a smaller one.');
+    if (prepared.size > MAX_UPLOAD) throw new Error('That file is still over 4 MB. Choose a smaller one.');
     const form = new FormData();
     form.set('file', prepared);
     form.set('kind', kind);

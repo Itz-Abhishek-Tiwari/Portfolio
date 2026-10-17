@@ -1,8 +1,8 @@
 """Local-only draft persistence checks. Never publishes or overwrites concurrent edits."""
 import copy,json,uuid,urllib.request,urllib.error
-BASE='http://127.0.0.1:5173'
+from local_env import BASE,COOKIE
 def request(method='GET',body=None):
- headers={'Origin':BASE,'Cookie':'__sites_local_auth=1','Content-Type':'application/json'}
+ headers={'Origin':BASE,'Cookie':COOKIE,'Content-Type':'application/json'}
  try:
   with urllib.request.urlopen(urllib.request.Request(BASE+'/api/admin/content',method=method,headers=headers,data=json.dumps(body).encode() if body is not None else None)) as r:return r.status,json.loads(r.read())
  except urllib.error.HTTPError as e:return e.code,json.loads(e.read())

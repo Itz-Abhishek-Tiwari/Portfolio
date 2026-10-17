@@ -1,9 +1,8 @@
 """Checks admin state transitions against a local development preview only."""
 import copy,json,os,urllib.request,urllib.error,concurrent.futures
-BASE=os.environ.get('PORTFOLIO_TEST_URL','http://127.0.0.1:5173')
-assert BASE.startswith(('http://localhost:','http://127.0.0.1:')),'Use a local preview, never production.'
+from local_env import BASE,COOKIE
 def call(path,method='GET',body=None):
-    headers={'Cookie':'__sites_local_auth=1','Origin':BASE}
+    headers={'Cookie':COOKIE,'Origin':BASE}
     if body is not None:headers['Content-Type']='application/json';body=json.dumps(body).encode()
     req=urllib.request.Request(BASE+path,data=body,headers=headers,method=method)
     try:

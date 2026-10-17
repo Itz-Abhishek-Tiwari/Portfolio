@@ -1,7 +1,8 @@
-export const MAX_UPLOAD = 8 * 1024 * 1024;
+// Matches the server cap in app/api/admin/upload/route.ts (Vercel limits request bodies to 4.5 MB).
+export const MAX_UPLOAD = 4 * 1024 * 1024;
 const SERVER_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
-// Phone photos are often over 8 MB or in formats the server rejects (HEIC, AVIF, GIF). Re-encode
+// Phone photos are often over 4 MB or in formats the server rejects (HEIC, AVIF, GIF). Re-encode
 // them in the browser: scale to at most 2400px and save as WebP (JPEG where WebP is unsupported).
 export async function prepareImage(file: File): Promise<File> {
   if (SERVER_TYPES.includes(file.type) && file.size <= 1.5 * 1024 * 1024) return file;

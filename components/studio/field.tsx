@@ -87,7 +87,7 @@ export function AssetInput({
             e.target.value = '';
           }}
         />
-        <small>{kind === 'resume' ? 'PDF' : 'JPG, PNG or WebP'} · up to 8 MB</small>
+        <small>{kind === 'resume' ? 'PDF' : 'JPG, PNG or WebP'} · up to 4 MB</small>
       </label>
     </div>
   );

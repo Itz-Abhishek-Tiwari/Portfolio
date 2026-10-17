@@ -1,10 +1,10 @@
-"""Integration checks against the local Vinext development server."""
+"""Integration checks against the local Next.js development server."""
 import json, urllib.request, urllib.error, pathlib
 import os
-BASE=os.environ.get('PORTFOLIO_TEST_URL','http://localhost:3000')
+from local_env import BASE,COOKIE
 def request(path, method='GET', body=None, auth=False, origin=None, content_type='application/json'):
     headers={}
-    if auth: headers['Cookie']='__sites_local_auth=1'
+    if auth: headers['Cookie']=COOKIE
     if origin: headers['Origin']=origin
     if body is not None: headers['Content-Type']=content_type
     req=urllib.request.Request(BASE+path,data=body,headers=headers,method=method)

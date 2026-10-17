@@ -1,4 +1,4 @@
-import { env } from 'cloudflare:workers';
+import { supabaseConfig, supabaseHeaders } from '@/lib/server/supabase';
 export class DatabaseError extends Error {
   constructor(
     message: string,
@@ -8,19 +8,12 @@ export class DatabaseError extends Error {
   }
 }
 export async function dataRequest<T>(path: string, init?: RequestInit): Promise<T> {
-  const values = env as unknown as Record<string, string>,
-    base = values.PORTFOLIO_DATABASE_API_URL,
-    key = values.PORTFOLIO_DATABASE_API_KEY;
-  if (!base || !key)
-    throw new DatabaseError(
-      'PostgreSQL is not configured. Run npm run db:setup for local development, or configure the Supabase server URL and secret key.',
-      503
-    );
-  const headers = new Headers(init?.headers);
-  headers.set('apikey', key);
-  if (!key.startsWith('sb_secret_')) headers.set('Authorization', 'Bearer ' + key);
+  const config = supabaseConfig();
+  if (!config)
+    throw new DatabaseError('Supabase is not configured. Set SUPABASE_URL and SUPABASE_SECRET_KEY.', 503);
+  const headers = supabaseHeaders(config.key, init?.headers);
   headers.set('Content-Type', 'application/json');
-  const response = await fetch(base.replace(/\/$/, '') + '/' + path, {
+  const response = await fetch(config.url + '/rest/v1/' + path, {
     ...init,
     headers,
     signal: AbortSignal.timeout(12000)

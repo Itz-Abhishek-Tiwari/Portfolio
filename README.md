@@ -1,6 +1,6 @@
 # Abhishek Tiwari: portfolio and journal
 
-Personal portfolio with a journal and an admin studio. Next.js API routes on Vinext, deployed to Cloudflare Workers, with content stored in PostgreSQL (Supabase in production) and uploads in R2.
+Personal portfolio with a journal and an admin studio. Next.js App Router, deployed to **Vercel**, with content in **Supabase** Postgres and uploads in Supabase Storage. Those are the only two services it needs.
 
 ## Project structure
 
@@ -26,35 +26,38 @@ small `SiteInfo` slice of content rather than the whole document.
 
 ```sh
 npm install
-npm run db:setup   # prepares the local port_abhishek_dev database and starts PostgREST on 127.0.0.1:54380
-npm run dev
+cp .env.example .env.local   # fill in your Supabase URL, secret key, DB URL and studio sign-in
+npm run db:migrate           # applies database/*.sql (tables, functions, storage bucket)
+npm run dev                  # http://localhost:3000
 ```
 
-Private local config is written to the ignored `.sites-runtime` folder.
+Local development talks to a real Supabase project. Use a separate one for development (the free
+plan allows two), so the tests and draft edits never touch the live site.
 
 ## Scripts
 
 | Command | What it does |
 | --- | --- |
-| `npm run dev` | Dev server |
-| `npm run build` | Regenerates `styles/themes.css`, then builds |
+| `npm run dev` | Dev server (`next dev`) |
+| `npm run build` | Regenerates `styles/themes.css`, then runs `next build` |
+| `npm start` | Serves the production build |
 | `npm run lint` | ESLint |
 | `npm run themes:generate` | Writes `styles/themes.css` from the palettes in `lib/theme.ts` |
-| `npm run db:setup` | Applies `database/*.sql` to the local database |
+| `npm run db:migrate` | Applies new `database/*.sql` files to `SUPABASE_DB_URL` |
 
-## Production database
+## Supabase
 
-Apply `database/*.sql` in order to your Supabase database, then set two server-only variables:
+The server reaches Supabase over plain HTTP with two server-only variables, `SUPABASE_URL` and
+`SUPABASE_SECRET_KEY` (`sb_secret_…`). No Supabase SDK is involved: data goes through PostgREST
+(`lib/server/db.ts`) and uploads through Storage (`lib/server/storage.ts`).
 
-- `PORTFOLIO_DATABASE_API_URL`: `https://YOUR_PROJECT.supabase.co/rest/v1`
-- `PORTFOLIO_DATABASE_API_KEY`: the Supabase secret key. Never expose it to browser code.
-
-The SQL enables row-level security and grants RPC access to the service role only.
+The SQL enables row-level security and grants access to the service role only. Uploads live in a
+private `media` bucket and are served through `/api/media/<key>`, so stored URLs never point at Supabase.
 
 ## Deploying
 
-- **Cloudflare Workers** (supported as-is): `npx @vinext/cloudflare deploy`
-- **Vercel**: needs a few small code changes first. See [docs/deploying-to-vercel.md](docs/deploying-to-vercel.md).
+Import the repo into Vercel and add the environment variables. No code changes or `vercel.json`
+are needed. See [docs/deploying-to-vercel.md](docs/deploying-to-vercel.md).
 
 ## Admin studio
 
@@ -62,7 +65,7 @@ The SQL enables row-level security and grants RPC access to the service role onl
 
 Admin access uses email and password sign-in at `/admin`. Set `PORTFOLIO_ADMIN_EMAIL`, `PORTFOLIO_ADMIN_PASSWORD` and (recommended) `PORTFOLIO_SESSION_SECRET`. Every write checks authorization and same-origin on the server.
 
-Uploads (JPG, PNG, WebP, PDF) go to R2 with size and file-signature checks.
+Uploads (JPG, PNG, WebP, PDF, up to 4 MB) go to Supabase Storage with size and file-signature checks. Vercel caps function request bodies at 4.5 MB, and the studio re-encodes large photos in the browser before uploading.
 
 ## Themes
 
@@ -82,17 +85,18 @@ The playlist is set under Studio → Music. The player uses the YouTube IFrame A
 
 ## Tests
 
-Run these against a local dev server:
+Run these against `npm run dev`. They sign in with the `PORTFOLIO_ADMIN_*` values from `.env.local`,
+and the contact test also needs `SUPABASE_DB_URL`:
 
 ```sh
-PORTFOLIO_TEST_URL=http://127.0.0.1:5173 python3 tests/smoke.py
+python3 tests/smoke.py
 python3 tests/admin_regressions.py
 python3 tests/blog_regressions.py
 node tests/contact_regressions.mjs
 node tests/theme_regressions.mjs
 ```
 
-They only touch the local database. The admin and contact tests restore or remove their own fixtures.
+They refuse to run against anything but localhost. The admin and contact tests restore or remove their own fixtures, but they still write to whichever Supabase project `.env.local` points at, so use a development project.
 
 ## Assets
 
