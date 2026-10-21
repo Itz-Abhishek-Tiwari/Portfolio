@@ -3,6 +3,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { ArrowUpRight, Save, Send, Eye, X, Undo2, Download, LogOut } from 'lucide-react';
 import { contentSchema, type Content } from '@/lib/content';
 import { themeIcon } from '@/lib/theme';
+import { formatDateTime } from '@/lib/site';
 import { useStudioMotion } from '@/hooks/use-studio-motion';
 import { jsonRequest, MAX_UPLOAD, prepareImage } from './studio-io';
 import type { Issues, UpdateContent, UploadFile, UploadFiles } from './types';
@@ -526,13 +527,7 @@ export default function Studio({
           </fieldset>
           {updatedAt && (
             <p className="saved-time">
-              Last saved{' '}
-              {new Intl.DateTimeFormat('en-IN', {
-                timeZone: 'Asia/Kolkata',
-                dateStyle: 'medium',
-                timeStyle: 'short'
-              }).format(new Date(updatedAt))}{' '}
-              · Revision {revision}
+              Last saved {formatDateTime(updatedAt)} · Revision {revision}
             </p>
           )}
         </section>

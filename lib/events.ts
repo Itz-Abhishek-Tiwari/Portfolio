@@ -35,10 +35,14 @@ export const onMusicState = (listener: () => void) => listen(MUSIC_STATE, listen
 export const toggleMusic = () => window.dispatchEvent(new Event(TOGGLE_MUSIC));
 export const onToggleMusic = (listener: () => void) => listen(TOGGLE_MUSIC, listener);
 
-// A game theme is about to play: the soundtrack pauses so the two don't overlap.
+// A game theme is about to play: the soundtrack pauses so the two don't overlap,
+// and resumes when the clip is over.
 const PAUSE_MUSIC = 'portfolio:pause-music';
 export const pauseMusic = () => window.dispatchEvent(new Event(PAUSE_MUSIC));
 export const onPauseMusic = (listener: () => void) => listen(PAUSE_MUSIC, listener);
+const RESUME_MUSIC = 'portfolio:resume-music';
+export const resumeMusic = () => window.dispatchEvent(new Event(RESUME_MUSIC));
+export const onResumeMusic = (listener: () => void) => listen(RESUME_MUSIC, listener);
 
 function listen(name: string, listener: (event: Event) => void) {
   window.addEventListener(name, listener);

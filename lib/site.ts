@@ -25,5 +25,37 @@ export function siteInfo(c: Content): SiteInfo {
   };
 }
 
-export const formatDate = (iso: string) =>
-  new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium', timeZone: 'Asia/Kolkata' }).format(new Date(iso));
+// Dates are printed from Intl's numeric parts only: Node and browsers ship different locale data
+// ("21 Oct 2026 at 9:37 AM" vs "21 Oct 2026, 9:37 am"), which broke hydration of server-rendered times.
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+function istParts(iso: string) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hourCycle: 'h23'
+  }).formatToParts(new Date(iso));
+  const get = (type: string) => parts.find(p => p.type === type)?.value ?? '';
+  return {
+    day: Number(get('day')),
+    month: Number(get('month')),
+    year: get('year'),
+    hour: Number(get('hour')) % 24,
+    minute: get('minute')
+  };
+}
+
+/** "21 Oct 2026" in IST, identical on the server and in every browser. */
+export function formatDate(iso: string) {
+  const p = istParts(iso);
+  return p.day + ' ' + MONTHS[p.month - 1] + ' ' + p.year;
+}
+
+/** "21 Oct 2026, 9:37 AM" in IST, identical on the server and in every browser. */
+export function formatDateTime(iso: string) {
+  const p = istParts(iso);
+  return formatDate(iso) + ', ' + (p.hour % 12 || 12) + ':' + p.minute + ' ' + (p.hour < 12 ? 'AM' : 'PM');
+}

@@ -37,7 +37,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <noscript
           dangerouslySetInnerHTML={{
             __html:
-              '<style>.portfolio-content[data-motion] .hero-title .line > span { transform: none !important; } .portfolio-content[data-motion] :is(.hero-meta, .hero-foot) { opacity: 1 !important; }</style>'
+              '<style>.portfolio-content[data-motion] .hero-title .word { transform: none !important; } .portfolio-content[data-motion] :is(.hero-meta, .hero-foot) { opacity: 1 !important; }</style>'
           }}
         />
       </head>

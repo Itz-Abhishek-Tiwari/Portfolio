@@ -1,6 +1,6 @@
 import { loadYouTubeApi, type Player } from './youtube-api';
 import { GAME_CLIP_SECONDS, type GameSound } from '@/lib/games';
-import { pauseMusic } from '@/lib/events';
+import { pauseMusic, resumeMusic } from '@/lib/events';
 
 // Plays a few seconds of a game's theme through one hidden YouTube player shared by every game cover.
 
@@ -111,6 +111,7 @@ function finish() {
   clearTimers();
   void ready?.then(player => player.stopVideo());
   set(current, 'idle');
+  resumeMusic();
 }
 
 /** Warm up the hidden player (e.g. on hover) so the first click starts faster. */
@@ -122,6 +123,7 @@ function fail(key: string) {
   void ready?.then(player => player.stopVideo());
   set(key, 'error');
   errorTimer = setTimeout(() => current === key && set(key, 'idle'), 2600);
+  resumeMusic();
 }
 
 /** Start a clip (no-op if it is already on). */

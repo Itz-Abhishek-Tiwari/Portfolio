@@ -4,7 +4,7 @@ import { Play, Pause, SkipBack, SkipForward, Volume2, ArrowUpRight, Music2 } fro
 import { youtubeSource, musicSourceUrl } from '@/lib/music';
 import { scrollMotion } from '@/lib/gsap';
 import { prefersReducedMotion } from '@/hooks/use-reduced-motion';
-import { announceMusic, onPauseMusic } from '@/lib/events';
+import { announceMusic, onPauseMusic, onResumeMusic } from '@/lib/events';
 import { loadYouTubeApi, type Player } from './youtube-api';
 const clock = (n: number) => Math.floor(n / 60) + ':' + String(Math.floor(n % 60)).padStart(2, '0');
 export default function MusicPlayer({
@@ -20,7 +20,8 @@ export default function MusicPlayer({
     player = useRef<Player | null>(null),
     slot = useRef<HTMLSpanElement>(null),
     disc = useRef<HTMLSpanElement>(null),
-    spin = useRef<gsap.core.Tween | null>(null);
+    spin = useRef<gsap.core.Tween | null>(null),
+    resumeAfterClip = useRef(false);
   const [ready, setReady] = useState(false),
     [playing, setPlaying] = useState(false),
     [elapsed, setElapsed] = useState(0),
@@ -127,8 +128,30 @@ export default function MusicPlayer({
       node.remove();
     };
   }, [url]);
-  // A game theme clip pauses the soundtrack.
-  useEffect(() => onPauseMusic(() => player.current?.pauseVideo()), []);
+  // A game theme clip pauses the soundtrack; it picks up again when the clip ends, unless the
+  // visitor took over the controls in between. The short wait covers hovering from one cover to the
+  // next, where one clip ends just before the next one starts.
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const stopPause = onPauseMusic(() => {
+      clearTimeout(timer);
+      if (player.current?.getPlayerState() === 1) resumeAfterClip.current = true;
+      player.current?.pauseVideo();
+    });
+    const stopResume = onResumeMusic(() => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        if (!resumeAfterClip.current) return;
+        resumeAfterClip.current = false;
+        player.current?.playVideo();
+      }, 600);
+    });
+    return () => {
+      clearTimeout(timer);
+      stopPause();
+      stopResume();
+    };
+  }, []);
   // Track progress only while something is playing; state changes cover the rest.
   useEffect(() => {
     if (!playing) return;
@@ -185,6 +208,7 @@ export default function MusicPlayer({
   const cover = track.video_id && noHiRes !== track.video_id ? thumb('maxresdefault') : art;
   function control(action: () => void) {
     setError('');
+    resumeAfterClip.current = false;
     action();
   }
   const pad = (n: number) => String(n).padStart(2, '0');

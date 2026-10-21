@@ -1,6 +1,16 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import { ArrowDown, ArrowUp, Search, Trash2, Gamepad2, Music2, Play, Square } from 'lucide-react';
+import {
+  ArrowDown,
+  ArrowUp,
+  Search,
+  Trash2,
+  Gamepad2,
+  Image as ImageIcon,
+  Music2,
+  Play,
+  Square
+} from 'lucide-react';
 import type { Content } from '@/lib/content';
 import { gameCover, type Game, type GameResult, type GameSound } from '@/lib/games';
 import { youtubeSource } from '@/lib/music';
@@ -129,6 +139,63 @@ function GameSoundField({
   );
 }
 
+/** Every image RAWG has for the game (backgrounds, then screenshots); clicking one makes it the poster. */
+function GamePosterField({ game, onPick }: { game: Game; onPick: (image: string) => void }) {
+  const [images, setImages] = useState<string[] | null>(null);
+  const [open, setOpen] = useState(false);
+  const [error, setError] = useState('');
+  async function toggle() {
+    setOpen(o => !o);
+    if (images || open) return;
+    setError('');
+    try {
+      const response = await fetch('/api/admin/games/images?id=' + game.rawgId);
+      const data = (await response.json()) as { images?: string[]; error?: string };
+      if (!response.ok) throw new Error(data.error || 'Could not load posters.');
+      setImages(data.images ?? []);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not load posters.');
+    }
+  }
+  return (
+    <div className="games-sound">
+      <span className="games-sound-row">
+        <span className="games-sound-label">
+          <ImageIcon size={14} /> Poster
+        </span>
+        <button type="button" className="text-button" aria-expanded={open} onClick={() => void toggle()}>
+          {open ? 'Close' : 'Choose poster'}
+        </button>
+      </span>
+      {open &&
+        (error ? (
+          <p className="studio-status error" role="alert">
+            {error}
+          </p>
+        ) : !images ? (
+          <span className="studio-info">Loading posters from RAWG…</span>
+        ) : !images.length ? (
+          <span className="studio-info">RAWG has no other images for this game.</span>
+        ) : (
+          <div className="games-posters" role="group" aria-label={'Posters for ' + game.name}>
+            {images.map((url, i) => (
+              <button
+                type="button"
+                key={url}
+                className={'games-poster' + (url === game.image ? ' active' : '')}
+                aria-pressed={url === game.image}
+                aria-label={(i < 2 ? 'Cover ' : 'Screenshot ') + (i + 1)}
+                onClick={() => onPick(url)}
+              >
+                <img src={gameCover(url, 420)} alt="" loading="lazy" />
+              </button>
+            ))}
+          </div>
+        ))}
+    </div>
+  );
+}
+
 export default function GamesEditor({
   content: c,
   onChange,
@@ -209,8 +276,9 @@ export default function GamesEditor({
           </h3>
           <p className="studio-info">
             Search RAWG and pick up to {MAX_GAMES} games. Cover art, genres, platforms and Metacritic score
-            are copied in when you pick, so the site never waits on RAWG. The first game is shown largest.
-            Each game&apos;s theme is found on YouTube automatically; change or remove it below.
+            are copied in when you pick, so the site never waits on RAWG. The first game is shown largest. Use
+            Choose poster to swap the cover for another RAWG image or screenshot. Each game&apos;s theme is
+            found on YouTube automatically; change or remove it below.
           </p>
           {finding.length > 0 && (
             <p className="studio-info">Finding themes on YouTube… {finding.length} left</p>
@@ -301,6 +369,10 @@ export default function GamesEditor({
                     onChange={e => edit(i, e.target.value)}
                   />
                 </label>
+                <GamePosterField
+                  game={g}
+                  onPick={image => onChange(games.map((x, j) => (j === i ? { ...x, image } : x)))}
+                />
                 {/* Keyed by clip so a newly found or picked theme starts with its own start time. */}
                 <GameSoundField
                   key={g.sound?.videoId ?? 'none'}

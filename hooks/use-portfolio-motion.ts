@@ -3,7 +3,7 @@ import { useEffect, type RefObject } from 'react';
 import { scrollMotion } from '@/lib/gsap';
 import { useReducedMotion } from './use-reduced-motion';
 
-// The hero headline rises out of a mask once, sections fade up as they enter, and section kickers pin in the rail.
+// The hero headline rises word by word out of its line masks once, sections fade up as they enter, and section kickers pin in the rail.
 export function usePortfolioMotion(root: RefObject<HTMLDivElement | null>, enabled = true) {
   const reducedMotion = useReducedMotion();
   useEffect(() => {
@@ -12,10 +12,10 @@ export function usePortfolioMotion(root: RefObject<HTMLDivElement | null>, enabl
     const scope = root.current;
     const ctx = gsap.context(() => {
       gsap.fromTo(
-        '.hero-title .line > span',
+        '.hero-title .word',
         // y: 0 — site.css pre-hides these with translateY(105%), which GSAP would otherwise parse into a lasting pixel offset.
         { y: 0, yPercent: 105 },
-        { yPercent: 0, duration: 1.3, ease: 'expo.out', stagger: 0.12, delay: 0.1 }
+        { yPercent: 0, duration: 1.3, ease: 'expo.out', stagger: 0.07, delay: 0.1 }
       );
       gsap.fromTo(
         '.hero-meta, .hero-foot',
