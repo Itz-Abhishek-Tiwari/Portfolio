@@ -5,7 +5,7 @@ import nextTs from "eslint-config-next/typescript";
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
-  // Images are user-uploaded and streamed from Supabase Storage through /api/media; they skip the Next image optimizer.
+  // Images are user-uploaded and streamed from Vercel Blob through /api/media; they skip the Next image optimizer.
   { rules: { "@next/next/no-img-element": "off", "@typescript-eslint/no-unused-vars": ["warn", { ignoreRestSiblings: true }] } },
   // Override default ignores of eslint-config-next.
   globalIgnores([

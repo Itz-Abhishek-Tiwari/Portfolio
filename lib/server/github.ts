@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { dataRequest, query } from './db';
+import { readDoc, updateDoc } from './db';
 import type { GithubData } from '@/lib/github';
 export type { GithubData };
 const profileSchema = z.object({
@@ -26,11 +26,8 @@ export function githubLogin(url: string) {
 }
 const pending = new Map<string, Promise<GithubData>>();
 export async function loadGithub(login: string): Promise<GithubData> {
-  const rows = await dataRequest<{ payload: GithubData; fetched_at: number }[]>(
-      'portfolio_github_cache?' +
-        query({ id: 'eq.' + login.toLowerCase(), select: 'payload,fetched_at', limit: '1' })
-    ),
-    cached = rows[0];
+  const path = 'data/github/' + login.toLowerCase() + '.json',
+    cached = (await readDoc<{ payload: GithubData; fetched_at: number }>(path))?.data;
   if (cached && Date.now() - cached.fetched_at < 600000) return { ...cached.payload, stale: false };
   if (pending.has(login)) return pending.get(login)!;
   const work = (async () => {
@@ -79,11 +76,7 @@ export async function loadGithub(login: string): Promise<GithubData> {
         syncedAt: new Date().toISOString(),
         stale: false
       };
-      await dataRequest('portfolio_github_cache?on_conflict=id', {
-        method: 'POST',
-        headers: { Prefer: 'resolution=merge-duplicates' },
-        body: JSON.stringify({ id: login.toLowerCase(), payload: data, fetched_at: Date.now() })
-      });
+      await updateDoc(path, null, () => ({ data: { payload: data, fetched_at: Date.now() }, result: null }));
       return data;
     } catch (error) {
       if (cached) return { ...cached.payload, stale: true };

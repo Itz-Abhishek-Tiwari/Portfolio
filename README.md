@@ -1,6 +1,6 @@
 # Abhishek Tiwari: portfolio and journal
 
-Personal portfolio with a journal and an admin studio. Next.js App Router, deployed to **Vercel**, with content in **Supabase** Postgres and uploads in Supabase Storage. Those are the only two services it needs.
+Personal portfolio with a journal and an admin studio. Next.js App Router on **Vercel**, with content, the contact inbox and uploads all kept in a private **Vercel Blob** store. Vercel is the only service it needs: there is no database.
 
 ## Project structure
 
@@ -15,7 +15,7 @@ components/
   studio/             Admin studio; panels/ holds one module per tab
 hooks/                Client hooks (motion, smooth scroll, reduced motion)
 lib/                  Code shared by server and browser (schemas, themes, music links)
-lib/server/           Server-only code (database, auth, content and post stores, GitHub)
+lib/server/           Server-only code (Blob data store, auth, content and post stores, GitHub)
 styles/               tokens.css → themes.css → base.css → site.css; studio.css loads only under /admin
 ```
 
@@ -26,13 +26,13 @@ small `SiteInfo` slice of content rather than the whole document.
 
 ```sh
 npm install
-cp .env.example .env.local   # fill in your Supabase URL, secret key, DB URL and studio sign-in
-npm run db:migrate           # applies database/*.sql (tables, functions, storage bucket)
+cp .env.example .env.local   # fill in a Blob read-write token and the studio sign-in
 npm run dev                  # http://localhost:3000
 ```
 
-Local development talks to a real Supabase project. Use a separate one for development (the free
-plan allows two), so the tests and draft edits never touch the live site.
+Local development talks to a real Blob store. Create a separate private store for development, so
+the tests and draft edits never touch the live site. There is no schema to apply: each document is
+created on its first save, and until then the site shows the defaults from `lib/content.ts`.
 
 ## Scripts
 
@@ -43,16 +43,22 @@ plan allows two), so the tests and draft edits never touch the live site.
 | `npm start` | Serves the production build |
 | `npm run lint` | ESLint |
 | `npm run themes:generate` | Writes `styles/themes.css` from the palettes in `lib/theme.ts` |
-| `npm run db:migrate` | Applies new `database/*.sql` files to `SUPABASE_DB_URL` |
 
-## Supabase
+## Data storage
 
-The server reaches Supabase over plain HTTP with two server-only variables, `SUPABASE_URL` and
-`SUPABASE_SECRET_KEY` (`sb_secret_…`). No Supabase SDK is involved: data goes through PostgREST
-(`lib/server/db.ts`) and uploads through Storage (`lib/server/storage.ts`).
+Everything lives as JSON in one private Vercel Blob store (`lib/server/db.ts`):
 
-The SQL enables row-level security and grants access to the service role only. Uploads live in a
-private `media` bucket and are served through `/api/media/<key>`, so stored URLs never point at Supabase.
+| Path | Holds |
+| --- | --- |
+| `data/content.json` | Site content: draft, published version and revision |
+| `data/posts.json` | Every journal post with its draft, published version and revision |
+| `data/inbox.json` | Contact messages and the per-visitor rate-limit counters |
+| `data/github/<login>.json` | Ten-minute cache of the GitHub profile and repos |
+| `media/<uuid>.<ext>` | Studio uploads, served through `/api/media/<key>` |
+
+Every write is conditional on the ETag read just before it, so two saves can't overwrite each other.
+The loser gets a 409, and the contact form retries on its own. Public pages read through the Blob
+CDN cache, so a publish can take up to a minute to show. The studio and preview always read fresh.
 
 ## Deploying
 
@@ -65,7 +71,7 @@ are needed. See [docs/deploying-to-vercel.md](docs/deploying-to-vercel.md).
 
 Admin access uses email and password sign-in at `/admin`. Set `PORTFOLIO_ADMIN_EMAIL`, `PORTFOLIO_ADMIN_PASSWORD` and (recommended) `PORTFOLIO_SESSION_SECRET`. Every write checks authorization and same-origin on the server.
 
-Uploads (JPG, PNG, WebP, PDF, up to 4 MB) go to Supabase Storage with size and file-signature checks. Vercel caps function request bodies at 4.5 MB, and the studio re-encodes large photos in the browser before uploading.
+Uploads (JPG, PNG, WebP, PDF, up to 4 MB) go to Vercel Blob with size and file-signature checks. Vercel caps function request bodies at 4.5 MB, and the studio re-encodes large photos in the browser before uploading.
 
 ## Themes
 
@@ -77,7 +83,7 @@ Seven themes, each with a light and dark palette: Nightfall, Afterglow, Evergree
 
 ## Contact form
 
-Messages are validated on both sides and stored in PostgreSQL. The form has a honeypot field, a request size limit, a same-origin check and rate limiting. The inbox in the studio marks messages read or archived. No email is sent automatically.
+Messages are validated on both sides and stored in Vercel Blob. The form has a honeypot field, a request size limit, a same-origin check and rate limiting. The inbox in the studio marks messages read or archived. No email is sent automatically.
 
 ## Music
 
@@ -86,7 +92,7 @@ The playlist is set under Studio → Music. The player uses the YouTube IFrame A
 ## Tests
 
 Run these against `npm run dev`. They sign in with the `PORTFOLIO_ADMIN_*` values from `.env.local`,
-and the contact test also needs `SUPABASE_DB_URL`:
+and the contact test also needs `BLOB_READ_WRITE_TOKEN`:
 
 ```sh
 python3 tests/smoke.py
@@ -96,7 +102,7 @@ node tests/contact_regressions.mjs
 node tests/theme_regressions.mjs
 ```
 
-They refuse to run against anything but localhost. The admin and contact tests restore or remove their own fixtures, but they still write to whichever Supabase project `.env.local` points at, so use a development project.
+They refuse to run against anything but localhost. The admin and contact tests restore or remove their own fixtures, but they still write to whichever Blob store `.env.local` points at, so use a development store.
 
 ## Assets
 

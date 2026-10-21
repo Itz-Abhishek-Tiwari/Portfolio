@@ -1,52 +1,45 @@
 # Deploying to Vercel
 
-The site is a standard Next.js app. It needs two services: **Vercel** for hosting and **Supabase**
-for the database and file storage. There is nothing to change in the code, and no `vercel.json`.
+The site is a standard Next.js app, and **Vercel** is the only service it needs. Content, journal
+posts, the contact inbox and uploads all live in a private **Vercel Blob** store. There is no
+database and no schema to apply. There is also nothing to change in the code, and no `vercel.json`.
 Vercel detects Next.js and runs `npm run build`, which regenerates the theme CSS and then runs
 `next build`.
 
-## 1. Set up Supabase
-
-1. Create a Supabase project (or two: one for production, one for local development and previews).
-2. Copy three values:
-   - **Project URL**: Project Settings → Data API, e.g. `https://abcd1234.supabase.co`
-   - **Secret key**: Project Settings → API Keys → *Secret keys* (`sb_secret_…`)
-   - **Connection string**: **Connect** → *Session pooler* (only for running migrations)
-3. Apply the schema from your machine:
-
-   ```sh
-   SUPABASE_DB_URL='postgresql://postgres.abcd1234:PASSWORD@aws-0-REGION.pooler.supabase.com:5432/postgres' \
-     npm run db:migrate
-   ```
-
-   This runs `database/001…004` in order and records each one, so it is safe to run again after
-   adding a migration. `004_storage.sql` creates the private `media` bucket for uploads (4 MB limit,
-   JPG/PNG/WebP/PDF only). If you'd rather use the dashboard, paste each file into the SQL Editor in order.
-
-## 2. Create the Vercel project
+## 1. Create the Vercel project
 
 1. Push the repo to GitHub, GitLab or Bitbucket.
 2. In Vercel, go to **Add New → Project** and import the repo. Leave every build setting at its default.
-3. Under **Settings → Environment Variables**, add:
+
+## 2. Connect a Blob store
+
+1. In the project, open **Storage → Create → Blob**. Choose **Private** access and connect it to
+   the project for all environments. With the CLI: `vercel blob create-store portfolio --access private`.
+2. Connecting the store adds `BLOB_STORE_ID`, and functions authenticate with short-lived OIDC
+   tokens. You don't have to copy a token into the Vercel settings.
+
+The first studio save creates each document. Until then the site shows the defaults from
+`lib/content.ts`.
+
+## 3. Add the environment variables
+
+Under **Settings → Environment Variables**, add:
 
 | Variable | Required | Value |
 | --- | --- | --- |
-| `SUPABASE_URL` | yes | `https://<project>.supabase.co` |
-| `SUPABASE_SECRET_KEY` | yes | The `sb_secret_…` key. Server-only. Also seeds the contact form's IP hash. |
 | `PORTFOLIO_ADMIN_EMAIL` | yes | Studio sign-in email |
 | `PORTFOLIO_ADMIN_PASSWORD` | yes | Studio sign-in password |
-| `PORTFOLIO_SESSION_SECRET` | recommended | `openssl rand -base64 48`. Without it, sessions are signed with the admin password. |
+| `PORTFOLIO_SESSION_SECRET` | recommended | `openssl rand -base64 48`. Signs sessions and keys the contact form's IP hash. Without it, the admin password is used. |
 | `PORTFOLIO_YOUTUBE_API_KEY` | optional | Studio → Music search |
 | `PORTFOLIO_RAWG_API_KEY` | optional | Studio → Games search |
 
-`SUPABASE_DB_URL` is only for migrations, so it doesn't belong in Vercel. Don't prefix anything
-with `NEXT_PUBLIC_`. That would ship it to the browser.
+Don't prefix anything with `NEXT_PUBLIC_`. That would ship it to the browser.
 
-4. Deploy. Every push to `main` deploys to production, and other branches get preview URLs.
+Deploy. Every push to `main` deploys to production, and other branches get preview URLs.
 
-**Preview deployments share the production database by default.** Anyone with a preview URL and
-the admin password can edit live content. Either scope the Supabase variables to *Production*,
-or point *Preview* at your development project.
+**Preview deployments share the production store if it is connected to every environment.** Anyone
+with a preview URL and the admin password can then edit live content. To prevent that, connect the
+store to *Production* only, and connect a second store to *Preview* and *Development*.
 
 ### Custom domain
 
@@ -54,48 +47,35 @@ Go to **Settings → Domains**, add the domain, and set the DNS records Vercel s
 cookie is marked `Secure` automatically over HTTPS. The same-origin checks compare the `Origin`
 header with the request's own origin, so they work on any domain without configuration.
 
-## Moving existing content from the old local database
-
-If you have content in the old local Postgres database (`port_abhishek_dev`, from the removed
-`npm run db:setup`), copy it into Supabase after running the migrations:
-
-```sh
-pg_dump "postgresql:///port_abhishek_dev?host=/tmp" --data-only \
-  --table='public.portfolio_*' --exclude-table=public.portfolio_schema_migrations \
-  | psql "$SUPABASE_DB_URL"
-```
-
-Uploaded files aren't in that database. Content that points at `/api/media/<key>` shows broken
-images until you upload those files again in the studio.
-
 ## After the first deploy
 
+- [ ] `/admin` signs in, saves a draft, and **Publish** updates the live page (within about a minute)
 - [ ] `/` and `/blog` show your published content, not the defaults
-- [ ] `/admin` signs in, saves a draft, and **Publish** updates the live page
 - [ ] Uploading an image in the studio works, and the image loads from `/api/media/…`
 - [ ] The résumé preview and download work
 - [ ] The contact form submits, and the message appears in Studio → Inbox
-- [ ] Function logs (Vercel → Deployment → Logs) show no `Supabase is not configured` errors
+- [ ] Function logs (Vercel → Deployment → Logs) show no `Vercel Blob is not configured` errors
 
 ## Troubleshooting
 
 | Symptom | Cause |
 | --- | --- |
-| Pages 500, logs say `Supabase is not configured` | `SUPABASE_URL` or `SUPABASE_SECRET_KEY` missing for this environment (Production vs Preview). Redeploy after adding them. |
-| `The database request failed` | Publishable key used instead of the secret key, or migrations not applied |
-| Uploads fail with "Upload failed" | `004_storage.sql` not applied, so the `media` bucket is missing |
+| Pages 500, logs say `Vercel Blob is not configured` | No Blob store is connected for this environment (Production vs Preview). Connect it, then redeploy. |
+| A publish doesn't show on the live site right away | Public pages read through the Blob CDN cache for up to 60 seconds. The studio and `/admin/preview` always read fresh. |
+| `A newer draft exists` or `changed in another session` | Another tab or session saved first. Reload, then save again. |
 | Upload says "Choose a file under 4 MB" | Vercel caps request bodies at 4.5 MB. Compress the PDF. Photos are re-encoded automatically. |
-| `/api/media/…` returns 503 | Supabase variables missing |
+| `/api/media/…` returns 503 | No Blob store connected |
 | Saves return 403 | The request's `Origin` doesn't match the deployment URL, e.g. signed in on a preview URL and saving on the custom domain |
 | Everyone signed out of the studio | `PORTFOLIO_SESSION_SECRET` (or, without it, the admin password) changed. Expected, so sign in again. |
-| `db:migrate` fails with a TLS or connection error | Use the *Session pooler* string from **Connect**. The direct connection is IPv6-only on some networks. |
 
 ## Local development
 
 ```sh
-cp .env.example .env.local   # same variables as Vercel, plus SUPABASE_DB_URL
+cp .env.example .env.local   # studio sign-in, plus BLOB_READ_WRITE_TOKEN for a development store
 npm run dev                  # http://localhost:3000
 ```
 
-Point `.env.local` at your development Supabase project. The integration tests in `tests/` write
-drafts and contact fixtures to whichever project it names.
+Get the token from the store's page in the Vercel dashboard, or run `vercel env pull .env.local`
+with the CLI, which writes `BLOB_STORE_ID` and an OIDC token that lasts 12 hours. Point local
+development at a development store. The integration tests in `tests/` write drafts and contact
+fixtures to whichever store it names.
