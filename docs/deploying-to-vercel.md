@@ -54,13 +54,13 @@ header with the request's own origin, so they work on any domain without configu
 - [ ] Uploading an image in the studio works, and the image loads from `/api/media/…`
 - [ ] The résumé preview and download work
 - [ ] The contact form submits, and the message appears in Studio → Inbox
-- [ ] Function logs (Vercel → Deployment → Logs) show no `Vercel Blob is not configured` errors
+- [ ] Function logs (Vercel → Deployment → Logs) show no `Storage is not set up` errors
 
 ## Troubleshooting
 
 | Symptom | Cause |
 | --- | --- |
-| Pages 500, logs say `Vercel Blob is not configured` | No Blob store is connected for this environment (Production vs Preview). Connect it, then redeploy. |
+| Pages 500, or the studio says `Storage is not set up` | No Blob store is connected for this environment (Production vs Preview). Connect it, then redeploy. |
 | A studio change doesn't show on the live site | It was saved as a draft. Only **Publish** changes the live site; `/admin/preview` shows the draft. |
 | `A newer draft exists` or `changed in another session` | Another tab or session saved first. Reload, then save again. |
 | Upload says "Choose a file under 4 MB" | Vercel caps request bodies at 4.5 MB. Compress the PDF. Photos are re-encoded automatically. |

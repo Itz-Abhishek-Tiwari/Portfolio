@@ -51,7 +51,13 @@ export async function POST(request: Request) {
       { status: 422 }
     );
   if (!storageReady())
-    return Response.json({ error: 'Upload storage is unavailable. Try again later.' }, { status: 503 });
+    return Response.json(
+      {
+        error:
+          'Upload storage is not set up. Connect a Blob store to the Vercel project, or set BLOB_READ_WRITE_TOKEN in .env.local and restart the dev server.'
+      },
+      { status: 503 }
+    );
   try {
     const ext = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'application/pdf': 'pdf' }[
         detected

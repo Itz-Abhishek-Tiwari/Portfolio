@@ -1,8 +1,9 @@
-import {get,put} from '@vercel/blob';
+import {get,head,put} from '@vercel/blob';
 import {base,cookie} from './local-env.mjs';
 import {randomUUID,createHmac} from 'node:crypto';
 const PATH='data/inbox.json';
-async function readInbox(){const r=await get(PATH,{access:'private',useCache:false});return r?.statusCode===200?{data:await new Response(r.stream).json(),etag:r.blob.etag}:{data:{messages:[],limits:{}},etag:null};}
+// The ETag comes from head(), like lib/server/db.ts: storage reads may omit it.
+async function readInbox(){const meta=await head(PATH).catch(()=>null);const r=meta&&await get(PATH,{access:'private',useCache:false});return r?.statusCode===200?{data:await new Response(r.stream).json(),etag:meta.etag}:{data:{messages:[],limits:{}},etag:null};}
 const name='Local QA '+randomUUID(),ip='local-qa-'+randomUUID(),bucket=createHmac('sha256',process.env.PORTFOLIO_SESSION_SECRET||process.env.PORTFOLIO_ADMIN_PASSWORD).update(ip).digest('hex'),data={name,email:'qa@example.com',topic:'Project inquiry',message:'A local automated contact test. <script>not executable</script>',website:''};
 const stored=async()=>(await readInbox()).data.messages.filter(m=>m.name===name);
 async function post(body,origin=base){const r=await fetch(base+'/api/contact',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json','X-Real-IP':ip},body:JSON.stringify(body)});const raw=await r.text();let responseBody;try{responseBody=JSON.parse(raw);}catch{responseBody={error:raw};}return {status:r.status,body:responseBody};}
