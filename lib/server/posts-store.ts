@@ -6,10 +6,10 @@ import { postSchema, type Post, type PostRow } from '@/lib/posts';
 // and revisions against the whole set before its conditional write.
 const PATH = 'data/posts.json';
 
-const readPosts = cache(async (fresh: boolean) => (await readDoc<PostRow[]>(PATH, fresh))?.data ?? []);
+const readPosts = cache(async () => (await readDoc<PostRow[]>(PATH))?.data ?? []);
 
 export async function listPosts(admin = false) {
-  const rows = (await readPosts(admin))
+  const rows = (await readPosts())
     .filter(row => admin || (!row.archived && row.published))
     .sort((a, b) =>
       admin
@@ -27,11 +27,11 @@ export async function listPosts(admin = false) {
 // Cached so generateMetadata and the page share one read.
 export const publishedPost = cache(async (slug: string) => {
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) return null;
-  const row = (await readPosts(false)).find(r => !r.archived && r.published?.slug === slug);
+  const row = (await readPosts()).find(r => !r.archived && r.published?.slug === slug);
   return row ? { ...row, published: postSchema.parse(row.published) } : null;
 });
 export async function draftPost(id: string) {
-  return (await readPosts(true)).find(row => row.id === id) || null;
+  return (await readPosts()).find(row => row.id === id) || null;
 }
 
 const SLUG_TAKEN = 'This slug is already used. Choose a different slug.';
@@ -45,7 +45,7 @@ async function changePost(
   conflict: string,
   change: (row: PostRow | undefined, rows: PostRow[], now: string) => PostRow
 ) {
-  const doc = await readDoc<PostRow[]>(PATH, true),
+  const doc = await readDoc<PostRow[]>(PATH),
     rows = doc?.data ?? [],
     index = rows.findIndex(row => row.id === id);
   if ((index < 0 ? 0 : Number(rows[index].revision)) !== revision) throw new DatabaseError(conflict, 409);

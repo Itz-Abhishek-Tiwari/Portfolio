@@ -24,12 +24,12 @@ function requireStore() {
 export type Doc<T> = { data: T; etag: string };
 
 /**
- * Reads a JSON document, or null when it doesn't exist yet. `fresh` skips the CDN cache: use it for
- * the studio and before writes. Public pages read through the cache and may lag a save by up to a minute.
+ * Reads a JSON document, or null when it doesn't exist yet. Always from origin storage: the CDN copy
+ * can lag an overwrite by a minute, and a publish has to show on the next page load.
  */
-export async function readDoc<T>(pathname: string, fresh = false): Promise<Doc<T> | null> {
+export async function readDoc<T>(pathname: string): Promise<Doc<T> | null> {
   requireStore();
-  const result = await get(pathname, { access: 'private', useCache: !fresh });
+  const result = await get(pathname, { access: 'private', useCache: false });
   if (!result || result.statusCode !== 200) return null;
   return { data: (await new Response(result.stream).json()) as T, etag: result.blob.etag };
 }
@@ -60,7 +60,7 @@ export async function updateDoc<T, R>(
   change: (data: T) => { data: T; result: R }
 ): Promise<R> {
   for (let attempt = 0; ; attempt++) {
-    const doc = await readDoc<T>(pathname, true);
+    const doc = await readDoc<T>(pathname);
     const { data, result } = change(doc?.data ?? structuredClone(initial));
     try {
       await writeDoc(pathname, data, doc?.etag ?? null, 'busy');

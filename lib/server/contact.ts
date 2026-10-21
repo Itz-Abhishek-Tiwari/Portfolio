@@ -40,7 +40,7 @@ export async function submitContact(
 
 /** Newest first, 50 at a time; `before` continues after the last message of the previous page. */
 export async function listMessages(before?: { before: string; id: string }) {
-  const messages = (await readDoc<Inbox>(PATH, true))?.data.messages ?? [];
+  const messages = (await readDoc<Inbox>(PATH))?.data.messages ?? [];
   let start = 0;
   if (before) {
     const index = messages.findIndex(m => m.id === before.id);

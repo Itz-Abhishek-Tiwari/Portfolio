@@ -14,10 +14,14 @@ import { announceModeChange, onModeChange } from '@/lib/events';
 
 type Mode = 'dark' | 'light';
 const STORAGE_KEY = 'portfolio-color-mode';
+// The site default in force when the visitor chose. When the studio publishes a new default, older
+// choices are dropped so the new default reaches everyone, including the admin's own browser.
+const DEFAULT_KEY = 'portfolio-color-mode-default';
 const DefaultMode = createContext<Mode>('dark');
 
 function storedMode(fallback: Mode): Mode {
   try {
+    if (localStorage.getItem(DEFAULT_KEY) !== fallback) return fallback;
     const value = localStorage.getItem(STORAGE_KEY);
     return value === 'dark' || value === 'light' ? value : fallback;
   } catch {
@@ -33,7 +37,7 @@ function subscribe(callback: () => void) {
   };
 }
 
-/** The visitor's light/dark choice, persisted on their device; falls back to the site default. */
+/** The visitor's light/dark choice, persisted on their device until the site default changes. */
 export function useVisitorMode() {
   const fallback = useContext(DefaultMode);
   const mode = useSyncExternalStore(
@@ -44,9 +48,10 @@ export function useVisitorMode() {
   const toggle = useCallback(() => {
     try {
       localStorage.setItem(STORAGE_KEY, mode === 'dark' ? 'light' : 'dark');
+      localStorage.setItem(DEFAULT_KEY, fallback);
     } catch {}
     announceModeChange();
-  }, [mode]);
+  }, [mode, fallback]);
   return { mode, toggle };
 }
 
@@ -88,25 +93,31 @@ export function ModeToggle() {
 
 export default function VisitorModeProvider({
   defaultMode,
+  theme,
   children
 }: {
   defaultMode: Mode;
+  theme: string;
   children: ReactNode;
 }) {
   return (
     <DefaultMode.Provider value={defaultMode}>
-      <DocumentMode />
+      <DocumentMode theme={theme} />
       {children}
     </DefaultMode.Provider>
   );
 }
 
-// Keeps the root element's colour scheme in step so native controls and scrollbars match.
-function DocumentMode() {
+// Keeps the root element's palette and colour scheme in step so the page background, native controls
+// and scrollbars match. Re-runs on theme changes because React then rewrites the root's className.
+function DocumentMode({ theme }: { theme: string }) {
   const { mode } = useVisitorMode();
   useEffect(() => {
-    document.documentElement.dataset.colorMode = mode;
-    document.documentElement.style.colorScheme = mode;
-  }, [mode]);
+    const root = document.documentElement;
+    root.dataset.colorMode = mode;
+    root.style.colorScheme = mode;
+    root.classList.toggle('mode-light', mode === 'light');
+    root.classList.toggle('mode-dark', mode === 'dark');
+  }, [mode, theme]);
   return null;
 }

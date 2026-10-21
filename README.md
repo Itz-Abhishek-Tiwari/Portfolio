@@ -57,8 +57,8 @@ Everything lives as JSON in one private Vercel Blob store (`lib/server/db.ts`):
 | `media/<uuid>.<ext>` | Studio uploads, served through `/api/media/<key>` |
 
 Every write is conditional on the ETag read just before it, so two saves can't overwrite each other.
-The loser gets a 409, and the contact form retries on its own. Public pages read through the Blob
-CDN cache, so a publish can take up to a minute to show. The studio and preview always read fresh.
+The loser gets a 409, and the contact form retries on its own. Reads skip the Blob CDN cache, so a
+publish shows on the next page load.
 
 ## Deploying
 

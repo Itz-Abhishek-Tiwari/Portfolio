@@ -83,7 +83,11 @@ export default function ProjectsPanel({
                 </select>
               </label>
               {text('Your contribution', 'description', { area: true, full: true })}
-              {text('Expanded project story', 'story', { area: true, full: true })}
+              {text('Expanded project story', 'story', {
+                area: true,
+                full: true,
+                hint: 'Shown on the project page only while the full case study below is empty.'
+              })}
               {text('Full case study (Markdown)', 'body', {
                 area: true,
                 full: true,

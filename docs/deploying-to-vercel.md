@@ -49,7 +49,7 @@ header with the request's own origin, so they work on any domain without configu
 
 ## After the first deploy
 
-- [ ] `/admin` signs in, saves a draft, and **Publish** updates the live page (within about a minute)
+- [ ] `/admin` signs in, saves a draft, and **Publish** updates the live page on the next load
 - [ ] `/` and `/blog` show your published content, not the defaults
 - [ ] Uploading an image in the studio works, and the image loads from `/api/media/…`
 - [ ] The résumé preview and download work
@@ -61,7 +61,7 @@ header with the request's own origin, so they work on any domain without configu
 | Symptom | Cause |
 | --- | --- |
 | Pages 500, logs say `Vercel Blob is not configured` | No Blob store is connected for this environment (Production vs Preview). Connect it, then redeploy. |
-| A publish doesn't show on the live site right away | Public pages read through the Blob CDN cache for up to 60 seconds. The studio and `/admin/preview` always read fresh. |
+| A studio change doesn't show on the live site | It was saved as a draft. Only **Publish** changes the live site; `/admin/preview` shows the draft. |
 | `A newer draft exists` or `changed in another session` | Another tab or session saved first. Reload, then save again. |
 | Upload says "Choose a file under 4 MB" | Vercel caps request bodies at 4.5 MB. Compress the PDF. Photos are re-encoded automatically. |
 | `/api/media/…` returns 503 | No Blob store connected |

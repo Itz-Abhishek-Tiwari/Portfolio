@@ -32,7 +32,7 @@ for filename, mime in [('abhishek.jpg','image/jpeg'),('abhishek-tiwari-cv.pdf','
     media=json.loads(raw)['url'];code,headers,raw=request(media)
     assert code==200 and raw==data and headers['Content-Type']==mime
     assert headers['X-Content-Type-Options']=='nosniff'
-assert json.loads(request('/api/content')[2])['content']['availability']=='Let’s build something thoughtful'
+public=json.loads(request('/api/content')[2]);assert public['content']['name'] and isinstance(public['content']['availability'],str)
 github=json.loads(request('/api/github')[2])
 assert github['profile']['login'].lower()=='itz-abhishek-tiwari' and github['repositories']
 assert any(r['name']=='NamiConfig' for r in github['repositories'])

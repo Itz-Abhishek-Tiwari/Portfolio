@@ -7,7 +7,7 @@ type Row = { draft: unknown; published: unknown; revision: number; updated_at: s
 
 // One document holds both the draft and the published content. Fetch it once per request,
 // however many server components (layout, page, metadata) ask for it.
-const readRow = cache(async (fresh: boolean) => (await readDoc<Row>(PATH, fresh))?.data ?? null);
+const readRow = cache(async () => (await readDoc<Row>(PATH))?.data ?? null);
 
 function version(row: Row | null, draft: boolean) {
   if (!row) return { content: initialContent, revision: 0, updatedAt: null };
@@ -19,17 +19,17 @@ function version(row: Row | null, draft: boolean) {
 }
 
 /** The published content, or the saved draft when `draft` is true. */
-export const readContent = cache(async (draft: boolean = false) => version(await readRow(draft), draft));
+export const readContent = cache(async (draft: boolean = false) => version(await readRow(), draft));
 
 /** Both versions from a single read (studio and its API). */
 export async function readDraftAndPublished() {
-  const row = await readRow(true);
+  const row = await readRow();
   return { draft: version(row, true), published: version(row, false) };
 }
 
 export async function saveContent(content: Content, revision: number, publish: boolean) {
   const conflict = 'A newer draft exists. Reload the latest draft before saving.';
-  const doc = await readDoc<Row>(PATH, true);
+  const doc = await readDoc<Row>(PATH);
   if ((doc?.data.revision ?? 0) !== revision) throw new DatabaseError(conflict, 409);
   const row: Row = {
     draft: content,

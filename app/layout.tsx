@@ -23,7 +23,12 @@ const fonts =
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const { content } = await readContent();
   return (
-    <html lang="en" data-color-mode={content.colorMode}>
+    // The theme also goes on the root so the page behind .site (overscroll, the mode ripple) matches it.
+    <html
+      lang="en"
+      className={'theme-' + content.theme + ' mode-' + content.colorMode}
+      data-color-mode={content.colorMode}
+    >
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
@@ -50,7 +55,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             }).replace(/</g, '\\u003c')
           }}
         />
-        <VisitorModeProvider defaultMode={content.colorMode}>
+        <VisitorModeProvider defaultMode={content.colorMode} theme={content.theme}>
           {children}
           {hasMusic(content.music) && <MusicWidget music={content.music} theme={content.theme} />}
         </VisitorModeProvider>
